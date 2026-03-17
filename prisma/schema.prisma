@@ -1,0 +1,57 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Employee {
+  id              String       @id @default(cuid())
+  name            String
+  role            String
+  isActive        Boolean      @default(true)
+  swapsRequested  SwapRecord[] @relation("Requester")
+  swapsPerformed  SwapRecord[] @relation("Partner")
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+}
+
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  password  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model SwapRecord {
+  id           String   @id @default(cuid())
+  employeeId   String
+  employee     Employee @relation("Requester", fields: [employeeId], references: [id])
+  partnerId    String?
+  partner      Employee? @relation("Partner", fields: [partnerId], references: [id])
+  requesterShiftDay Int?
+  partnerShiftDay   Int?
+  requesterDate     DateTime @default(now())
+  partnerDate       DateTime?
+  period            String?
+  month        Int
+  year         Int
+  quantity     Int      @default(1)
+  notes        String?
+  proofUrl     String?
+  recordedBy   String?  // Could be manager name/id
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([employeeId])
+  @@index([partnerId])
+  @@index([month, year])
+}
