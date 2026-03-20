@@ -20,15 +20,20 @@ export async function registerUser(
         return { success: false, error: "A senha deve ter ao menos 6 caracteres." };
     }
 
-    const existing = await prisma.user.findUnique({ where: { email } });
-    if (existing) {
-        return { success: false, error: "Este e-mail já está em uso." };
+    try {
+        const existing = await prisma.user.findUnique({ where: { email } });
+        if (existing) {
+            return { success: false, error: "Este e-mail já está em uso." };
+        }
+
+        const hashed = await bcrypt.hash(password, 12);
+        await prisma.user.create({ data: { name, email, password: hashed } });
+
+        return { success: true };
+    } catch (err: any) {
+        console.error("Register Error:", err);
+        return { success: false, error: err.message || "Erro interno ao conectar-se ao banco de dados." };
     }
-
-    const hashed = await bcrypt.hash(password, 12);
-    await prisma.user.create({ data: { name, email, password: hashed } });
-
-    return { success: true };
 }
 
 export async function loginUser(
@@ -39,25 +44,30 @@ export async function loginUser(
         return { success: false, error: "Preencha e-mail e senha." };
     }
 
-    const user = await prisma.user.findUnique({ where: { email } });
-    if (!user) {
-        return { success: false, error: "Credenciais inválidas." };
+    try {
+        const user = await prisma.user.findUnique({ where: { email } });
+        if (!user) {
+            return { success: false, error: "Credenciais inválidas." };
+        }
+
+        const valid = await bcrypt.compare(password, user.password);
+        if (!valid) {
+            return { success: false, error: "Credenciais inválidas." };
+        }
+
+        const cookieStore = await cookies();
+        cookieStore.set("manager-session", user.id, {
+            path: "/",
+            maxAge: 60 * 60 * 24, // 24h
+            httpOnly: true,
+            sameSite: "lax",
+        });
+
+        return { success: true };
+    } catch (err: any) {
+        console.error("Login Error:", err);
+        return { success: false, error: err.message || "Erro interno ao conectar-se ao banco de dados." };
     }
-
-    const valid = await bcrypt.compare(password, user.password);
-    if (!valid) {
-        return { success: false, error: "Credenciais inválidas." };
-    }
-
-    const cookieStore = await cookies();
-    cookieStore.set("manager-session", user.id, {
-        path: "/",
-        maxAge: 60 * 60 * 24, // 24h
-        httpOnly: true,
-        sameSite: "lax",
-    });
-
-    return { success: true };
 }
 
 export async function logoutUser(): Promise<void> {
