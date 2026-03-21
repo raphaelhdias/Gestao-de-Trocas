@@ -35,9 +35,10 @@ const menuItems = [
 interface SidebarProps {
     isOpen?: boolean;
     onClose?: () => void;
+    userName?: string;
 }
 
-export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
+export default function Sidebar({ isOpen = true, onClose, userName }: SidebarProps) {
     const pathname = usePathname();
     const router = useRouter();
 
@@ -125,12 +126,12 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
 
                     <div className="p-5 bg-slate-50/50 dark:bg-slate-900/50 rounded-3xl border border-slate-100 dark:border-slate-800 flex flex-col gap-4">
                         <div className="flex items-center gap-3 mb-2">
-                            <div className="w-10 h-10 rounded-2xl bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold">
-                                RG
+                            <div className="w-10 h-10 rounded-2xl bg-indigo-100 dark:bg-indigo-900/50 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold uppercase">
+                                {userName ? userName.substring(0, 2) : "AD"}
                             </div>
                             <div className="min-w-0">
-                                <p className="text-xs font-black text-text-primary leading-tight truncate">Raphael G.</p>
-                                <p className="text-[10px] text-text-muted font-bold uppercase tracking-wider">Administrador</p>
+                                <p className="text-xs font-black text-text-primary leading-tight truncate">{userName || "Administrador"}</p>
+                                <p className="text-[10px] text-text-muted font-bold uppercase tracking-wider">Gestor</p>
                             </div>
                         </div>
                         <button

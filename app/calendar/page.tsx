@@ -3,6 +3,8 @@ import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, ArrowLeftRight, Ca
 import Link from "next/link";
 import { CalendarClient } from "./CalendarClient";
 import { cn } from "@/lib/utils";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 interface CalendarPageProps {
     searchParams: {
@@ -12,6 +14,10 @@ interface CalendarPageProps {
 }
 
 export default async function CalendarPage({ searchParams }: CalendarPageProps) {
+    const cookieStore = await cookies();
+    const userId = cookieStore.get("manager-session")?.value;
+    if (!userId) redirect("/login");
+
     const params = await searchParams;
     const now = new Date();
     const currentMonth = params.month ? parseInt(params.month) : now.getMonth() + 1;
@@ -20,7 +26,8 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
     const swaps = await prisma.swapRecord.findMany({
         where: {
             month: currentMonth,
-            year: currentYear
+            year: currentYear,
+            userId
         },
         include: {
             employee: { select: { id: true, name: true } },

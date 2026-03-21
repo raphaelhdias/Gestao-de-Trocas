@@ -1,9 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
 export const dynamic = 'force-dynamic';
 
 export async function GET() {
+    const cookieStore = await cookies();
+    const userId = cookieStore.get("manager-session")?.value;
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     try {
         const now = new Date();
         const stats = [];
@@ -17,17 +21,18 @@ export async function GET() {
             // Fetch counts for each period
             const [diurno, noturno, outros] = await Promise.all([
                 prisma.swapRecord.aggregate({
-                    where: { month, year, period: "Diurno" },
+                    where: { month, year, period: "Diurno", userId },
                     _sum: { quantity: true }
                 }),
                 prisma.swapRecord.aggregate({
-                    where: { month, year, period: "Noturno" },
+                    where: { month, year, period: "Noturno", userId },
                     _sum: { quantity: true }
                 }),
                 prisma.swapRecord.aggregate({
                     where: {
                         month,
                         year,
+                        userId,
                         NOT: { period: { in: ["Diurno", "Noturno"] } }
                     },
                     _sum: { quantity: true }

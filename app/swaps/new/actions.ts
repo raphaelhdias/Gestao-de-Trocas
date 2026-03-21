@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { writeFile } from "fs/promises";
 import { join } from "path";
 import { redirect } from "next/navigation";
+import { getCurrentUserId } from "../../actions/auth";
 
 export async function saveSwapRecord(formData: FormData) {
     const employeeId = formData.get("employeeId") as string;
@@ -38,6 +39,9 @@ export async function saveSwapRecord(formData: FormData) {
         }
     }
 
+    const userId = await getCurrentUserId();
+    if (!userId) return { success: false, error: "Não autorizado" };
+
     try {
         await prisma.swapRecord.create({
             data: {
@@ -53,11 +57,12 @@ export async function saveSwapRecord(formData: FormData) {
                 quantity: 1,
                 notes,
                 proofUrl,
+                userId,
             },
         });
 
         const monthlyCount = await prisma.swapRecord.count({
-            where: { employeeId, month, year },
+            where: { employeeId, month, year, userId },
         });
 
         revalidatePath("/");

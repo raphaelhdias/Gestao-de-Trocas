@@ -1,11 +1,18 @@
 import { prisma } from "@/lib/prisma";
 import Image from "next/image";
 import { FileImage, User, Calendar, ExternalLink } from "lucide-react";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 export default async function ProofsPage() {
+    const cookieStore = await cookies();
+    const userId = cookieStore.get("manager-session")?.value;
+    if (!userId) redirect("/login");
+
     const recordsWithProofs = await prisma.swapRecord.findMany({
         where: {
-            proofUrl: { not: null }
+            proofUrl: { not: null },
+            userId
         },
         include: { employee: true },
         orderBy: { createdAt: "desc" }

@@ -1,19 +1,24 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
 export async function GET(
     request: Request,
     { params }: { params: Promise<{ id: string }> }
 ) {
     try {
+        const cookieStore = await cookies();
+        const userId = cookieStore.get("manager-session")?.value;
+        if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
         const { id } = await params;
 
         if (!id) {
             return NextResponse.json({ error: "Missing employee ID" }, { status: 400 });
         }
 
-        const employee = await prisma.employee.findUnique({
-            where: { id },
+        const employee = await prisma.employee.findFirst({
+            where: { id, userId },
             include: {
                 swapsRequested: {
                     include: {

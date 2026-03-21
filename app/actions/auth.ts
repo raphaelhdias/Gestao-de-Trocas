@@ -8,6 +8,11 @@ export type AuthResult =
     | { success: true }
     | { success: false; error: string };
 
+export async function getCurrentUserId(): Promise<string | null> {
+    const cookieStore = await cookies();
+    return cookieStore.get("manager-session")?.value || null;
+}
+
 export async function registerUser(
     name: string,
     email: string,

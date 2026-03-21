@@ -18,6 +18,8 @@ import DeleteSwapButton from "../components/DeleteSwapButton";
 import HistoryPrintButton from "../components/HistoryPrintButton";
 import { cn } from "@/lib/utils";
 import EmptyState from "../components/EmptyState";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 
 interface HistoryPageProps {
     searchParams: {
@@ -29,8 +31,12 @@ interface HistoryPageProps {
 }
 
 export default async function HistoryPage({ searchParams }: HistoryPageProps) {
+    const cookieStore = await cookies();
+    const userId = cookieStore.get("manager-session")?.value;
+    if (!userId) redirect("/login");
+
     const params = await searchParams;
-    const filters: any = {};
+    const filters: any = { userId };
 
     if (params.employeeId) filters.employeeId = params.employeeId;
     if (params.month) filters.month = parseInt(params.month);
@@ -42,7 +48,7 @@ export default async function HistoryPage({ searchParams }: HistoryPageProps) {
             orderBy: { createdAt: "desc" },
             include: { employee: true, partner: true }
         }),
-        prisma.employee.findMany({ orderBy: { name: "asc" } })
+        prisma.employee.findMany({ where: { userId }, orderBy: { name: "asc" } })
     ]);
 
     const months = [

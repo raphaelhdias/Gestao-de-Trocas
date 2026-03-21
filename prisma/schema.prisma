@@ -19,6 +19,8 @@ model Employee {
   isActive        Boolean      @default(true)
   swapsRequested  SwapRecord[] @relation("Requester")
   swapsPerformed  SwapRecord[] @relation("Partner")
+  userId          String
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 }
@@ -28,6 +30,8 @@ model User {
   name      String
   email     String   @unique
   password  String
+  employees Employee[]
+  swaps     SwapRecord[]
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -49,10 +53,13 @@ model SwapRecord {
   notes        String?
   proofUrl     String?
   recordedBy   String?  // Could be manager name/id
+  userId       String
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
   @@index([employeeId])
   @@index([partnerId])
   @@index([month, year])
+  @@index([userId])
 }

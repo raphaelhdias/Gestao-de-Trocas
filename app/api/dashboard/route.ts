@@ -1,9 +1,13 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
+    const cookieStore = await cookies();
+    const userId = cookieStore.get("manager-session")?.value;
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     const { searchParams } = new URL(request.url);
     const month = searchParams.get("month");
     const year = searchParams.get("year");
@@ -20,18 +24,19 @@ export async function GET(request: Request) {
             activeEmployees,
             totalRecords
         ] = await Promise.all([
-            prisma.employee.count(),
+            prisma.employee.count({ where: { userId } }),
             prisma.swapRecord.aggregate({
-                where: { month: currentMonth, year: currentYear },
+                where: { month: currentMonth, year: currentYear, userId },
                 _sum: { quantity: true }
             }),
             prisma.swapRecord.findMany({
                 take: 5,
+                where: { userId },
                 orderBy: { createdAt: "desc" },
                 include: { employee: true, partner: true }
             }),
             prisma.employee.findMany({
-                where: { isActive: true },
+                where: { isActive: true, userId },
                 include: {
                     swapsRequested: {
                         where: { month: currentMonth, year: currentYear }
@@ -39,7 +44,7 @@ export async function GET(request: Request) {
                 },
                 orderBy: { name: "asc" }
             }),
-            prisma.swapRecord.count()
+            prisma.swapRecord.count({ where: { userId } })
         ]);
 
         const monthsStr = ["Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];

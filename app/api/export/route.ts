@@ -1,15 +1,20 @@
 import { prisma } from "@/lib/prisma";
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(request: Request) {
+    const cookieStore = await cookies();
+    const userId = cookieStore.get("manager-session")?.value;
+    if (!userId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
     const { searchParams } = new URL(request.url);
     const employeeId = searchParams.get("employeeId");
     const month = searchParams.get("month");
     const year = searchParams.get("year");
 
-    const filters: any = {};
+    const filters: any = { userId };
     if (employeeId) filters.employeeId = employeeId;
     if (month) filters.month = parseInt(month);
     if (year) filters.year = parseInt(year);

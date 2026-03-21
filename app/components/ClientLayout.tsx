@@ -6,10 +6,11 @@ import { Menu } from "lucide-react";
 
 interface ClientLayoutProps {
     hasSession: boolean;
+    userName?: string;
     children: React.ReactNode;
 }
 
-export default function ClientLayout({ hasSession, children }: ClientLayoutProps) {
+export default function ClientLayout({ hasSession, userName, children }: ClientLayoutProps) {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
     if (!hasSession) {
@@ -18,7 +19,7 @@ export default function ClientLayout({ hasSession, children }: ClientLayoutProps
 
     return (
         <div className="flex min-h-screen">
-            <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+            <Sidebar isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} userName={userName} />
 
             <div className="flex-1 flex flex-col min-w-0">
                 {/* Mobile Header */}
